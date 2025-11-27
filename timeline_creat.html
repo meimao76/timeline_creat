@@ -4,350 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>招标项目时间节点计算器</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
     <script src="https://unpkg.com/holiday-calendar/src/index.min.js"></script>
-    <style>
-        :root {
-            --primary: #3498db;
-            --primary-dark: #2980b9;
-            --secondary: #2c3e50;
-            --success: #2ecc71;
-            --danger: #e74c3c;
-            --warning: #f39c12;
-            --light: #ecf0f1;
-            --dark: #34495e;
-            --text: #333;
-            --text-light: #7f8c8d;
-            --border: #bdc3c7;
-            --weekend: #f8d7da;
-            --holiday: #ffeaa7;
-            --workday: #d1ecf1;
-            --transfer-workday: #d4edda;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Microsoft YaHei', sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            color: var(--text);
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        .panel {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-        }
-        
-        h1 {
-            text-align: center;
-            color: var(--secondary);
-            margin-bottom: 30px;
-            grid-column: 1 / -1;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--primary);
-        }
-        
-        h2 {
-            color: var(--secondary);
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .input-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        
-        label {
-            font-weight: bold;
-            color: var(--secondary);
-        }
-        
-        input[type="date"] {
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input[type="date"]:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-        
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-            font-weight: bold;
-        }
-        
-        button:hover {
-            background-color: var(--primary-dark);
-        }
-        
-        .result-section {
-            margin-top: 30px;
-        }
-        
-        .result-item {
-            background: var(--light);
-            border-left: 4px solid var(--primary);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 0 5px 5px 0;
-            transition: transform 0.2s;
-        }
-        
-        .result-item:hover {
-            transform: translateX(5px);
-        }
-        
-        .date {
-            font-weight: bold;
-            color: var(--secondary);
-            font-size: 18px;
-        }
-        
-        .description {
-            color: var(--text-light);
-            margin-top: 5px;
-        }
-        
-        .weekend {
-            color: var(--danger);
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
-        .instructions {
-            background-color: #e8f4fc;
-            border-radius: 5px;
-            padding: 15px;
-            margin-top: 30px;
-            font-size: 14px;
-        }
-        
-        .instructions h3 {
-            color: var(--secondary);
-            margin-bottom: 10px;
-        }
-        
-        .instructions ul {
-            padding-left: 20px;
-        }
-        
-        .instructions li {
-            margin-bottom: 5px;
-        }
-        
-        .calendar {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        .calendar th {
-            background-color: var(--primary);
-            color: white;
-            padding: 10px;
-            text-align: center;
-        }
-        
-        .calendar td {
-            border: 1px solid var(--border);
-            padding: 10px;
-            text-align: center;
-            height: 40px;
-            vertical-align: middle;
-            cursor: pointer;
-        }
-        
-        .calendar td:hover {
-            background-color: var(--light);
-        }
-        
-        .today {
-            background-color: var(--primary);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .selected {
-            background-color: var(--success);
-            color: white;
-            font-weight: bold;
-        }
-        
-        .weekend-day {
-            background-color: var(--weekend);
-        }
-        
-        .holiday {
-            background-color: var(--holiday);
-        }
-        
-        .workday {
-            background-color: var(--workday);
-        }
-        
-        .transfer-workday {
-            background-color: var(--transfer-workday);
-        }
-        
-        .calendar-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .calendar-controls button {
-            padding: 8px 15px;
-            font-size: 14px;
-        }
-        
-        .calendar-month-year {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--secondary);
-        }
-        
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-        }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-        }
-        
-        .timeline-visual {
-            margin-top: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .timeline-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            background: var(--light);
-        }
-        
-        .timeline-date {
-            min-width: 120px;
-            font-weight: bold;
-            color: var(--secondary);
-        }
-        
-        .timeline-desc {
-            flex: 1;
-            color: var(--text-light);
-        }
-        
-        .timeline-marker {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--primary);
-            margin-right: 10px;
-        }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .api-status {
-            margin-top: 10px;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-        
-        .api-status.loading {
-            background-color: var(--warning);
-            color: white;
-        }
-        
-        .api-status.success {
-            background-color: var(--success);
-            color: white;
-        }
-        
-        .api-status.error {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .calendar-controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-        }
-    </style>
+    
 </head>
 <body>
     <div class="container">
@@ -766,13 +425,13 @@
             }
             
             // 计算各个节点（按自然日计算间隔，然后调整到工作日）
-            const displayStartDate = await adjustToWorkday(addDays(publishDate, 1)); // 第二天开始公示
-            const displayEndDate = await adjustToWorkday(addDays(displayStartDate, 5)); // 公示5个自然日后调整到工作日
+            const displayStartDate = await addDays(publishDate, 1); // 第二天开始公示
+            const displayEndDate = await adjustToWorkday(addDays(displayStartDate, 4)); // 公示5个自然日后调整到工作日
             const qaStartDate = await adjustToWorkday(addDays(displayEndDate, 1)); // 公示结束后开始答疑
             const bidOpenDate = await adjustToWorkday(addDays(qaStartDate, 16)); // 往后16个自然日后调整到工作日开标
             const resultDisplayStartDate = bidOpenDate; // 同一天开始结果公示
             const resultDisplayEndDate = await adjustToWorkday(addDays(resultDisplayStartDate, 3)); // 结果公示3个自然日后调整到工作日
-            const announcementDate = resultDisplayEndDate; // 发出中标公告
+            const announcementDate = await addDays(resultDisplayEndDate, 1); // 发出中标公告
             
             // 显示结果
             displayResults([
@@ -782,7 +441,8 @@
                 { date: formatDate(qaStartDate), title: '答疑开始时间', description: '开始截至提问并开始答疑' },
                 { date: formatDate(bidOpenDate), title: '开标时间', description: '开标、评标和确认结果' },
                 { date: formatDate(resultDisplayStartDate), title: '结果公示开始时间', description: '开始结果公示' },
-                { date: formatDate(resultDisplayEndDate), title: '中标公告发布时间', description: '结果公示3个自然日后发布中标公告' }
+                { date: formatDate(resultDisplayEndDate), title: '中标公告截至时间', description: '结果公示3个自然日' },
+                { date: formatDate(announcementDate), title: '中标通知书发出时间', description: '中标通知书发出' }
             ]);
             
             // 显示时间线
@@ -793,7 +453,8 @@
                 { date: qaStartDate, title: '答疑开始', description: '开始截至提问并开始答疑' },
                 { date: bidOpenDate, title: '开标评标', description: '开标、评标和确认结果' },
                 { date: resultDisplayStartDate, title: '结果公示开始', description: '开始结果公示' },
-                { date: resultDisplayEndDate, title: '中标公告', description: '发布中标公告' }
+                { date: resultDisplayEndDate, title: '中标公告', description: '发布中标公告' },
+                { date: announcementDate, title: '中标通知书', description: '发出中标通知书' }
             ]);
             
             document.getElementById('resultSection').style.display = 'block';
