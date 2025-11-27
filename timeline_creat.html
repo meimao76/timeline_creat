@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招标项目时间节点计算器</title>
+    <script src="https://unpkg.com/holiday-calendar/src/index.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --text: #333;
+            --text-light: #7f8c8d;
+            --border: #bdc3c7;
+            --weekend: #f8d7da;
+            --holiday: #ffeaa7;
+            --workday: #d1ecf1;
+            --transfer-workday: #d4edda;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            grid-column: 1 / -1;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        label {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        input[type="date"] {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="date"]:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .result-section {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            background: var(--light);
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 5px 5px 0;
+            transition: transform 0.2s;
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .date {
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 18px;
+        }
+        
+        .description {
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+        
+        .weekend {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .instructions {
+            background-color: #e8f4fc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 30px;
+            font-size: 14px;
+        }
+        
+        .instructions h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .calendar th {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .calendar td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: center;
+            height: 40px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+        
+        .calendar td:hover {
+            background-color: var(--light);
+        }
+        
+        .today {
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .selected {
+            background-color: var(--success);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .weekend-day {
+            background-color: var(--weekend);
+        }
+        
+        .holiday {
+            background-color: var(--holiday);
+        }
+        
+        .workday {
+            background-color: var(--workday);
+        }
+        
+        .transfer-workday {
+            background-color: var(--transfer-workday);
+        }
+        
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-controls button {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        
+        .calendar-month-year {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .timeline-visual {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: var(--light);
+        }
+        
+        .timeline-date {
+            min-width: 120px;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .timeline-desc {
+            flex: 1;
+            color: var(--text-light);
+        }
+        
+        .timeline-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin-right: 10px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .api-status {
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        
+        .api-status.loading {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .api-status.success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .api-status.error {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .calendar-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>招标项目时间节点计算器</h1>
+        
+        <div class="panel">
+            <h2>输入招标信息</h2>
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="publishDate">招标发布时间：</label>
+                    <input type="date" id="publishDate">
+                </div>
+                <button id="calculateBtn">计算时间节点</button>
+            </div>
+            
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2>时间节点计算结果</h2>
+                <div id="resultItems"></div>
+                
+                <div class="timeline-visual">
+                    <h3>时间线可视化</h3>
+                    <div id="timelineItems"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>日历视图 <span id="apiStatus" class="api-status loading">正在加载节假日数据...</span></h2>
+            <div class="calendar-controls">
+                <button id="prevMonthBtn">上个月</button>
+                <div class="calendar-month-year" id="calendarMonthYear"></div>
+                <button id="nextMonthBtn">下个月</button>
+            </div>
+            <table class="calendar" id="calendar">
+                <thead>
+                    <tr>
+                        <th>一</th>
+                        <th>二</th>
+                        <th>三</th>
+                        <th>四</th>
+                        <th>五</th>
+                        <th>六</th>
+                        <th>日</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody">
+                    <!-- 日历内容将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--workday);"></div>
+                    <span>工作日</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--weekend);"></div>
+                    <span>周末</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--holiday);"></div>
+                    <span>法定节假日</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--transfer-workday);"></div>
+                    <span>调休工作日</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: var(--success);"></div>
+                    <span>选中的日期</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions" style="grid-column: 1 / -1;">
+            <h3>计算规则说明：</h3>
+            <ul>
+                <li>招标发布后第二天开始公示，公示5个工作日</li>
+                <li>第6个工作日开始截至提问并开始答疑</li>
+                <li>往后16个工作日开标，同一天评标和确认结果</li>
+                <li>结果公示3个工作日，第3个工作日发出中标公告</li>
+                <li>所有节点遇到周末自动顺延到下一个工作日</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 节假日数据缓存
+        let holidayCache = {};
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let calendar = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化holiday-calendar实例
+            try {
+                calendar = new HolidayCalendar();
+                console.log('HolidayCalendar 初始化成功');
+            } catch (error) {
+                console.error('HolidayCalendar 初始化失败:', error);
+                document.getElementById('apiStatus').textContent = '节假日库初始化失败，使用默认设置';
+                document.getElementById('apiStatus').className = 'api-status error';
+            }
+            
+            // 初始化日历
+            initCalendar();
+            
+            // 设置默认日期为今天
+            const today = new Date();
+            const formattedDate = formatDateForInput(today);
+            document.getElementById('publishDate').value = formattedDate;
+            
+            // 事件监听
+            document.getElementById('calculateBtn').addEventListener('click', calculateTimeline);
+            document.getElementById('prevMonthBtn').addEventListener('click', prevMonth);
+            document.getElementById('nextMonthBtn').addEventListener('click', nextMonth);
+            
+            // 初始计算一次
+            calculateTimeline();
+        });
+        
+        // 初始化日历
+        function initCalendar() {
+            renderCalendar(currentMonth, currentYear);
+            // 加载节假日数据
+            loadHolidays(currentYear);
+        }
+        
+        // 渲染日历
+        function renderCalendar(month, year) {
+            const calendarBody = document.getElementById('calendarBody');
+            const calendarMonthYear = document.getElementById('calendarMonthYear');
+            
+            // 清空日历
+            calendarBody.innerHTML = '';
+            
+            // 设置月份和年份显示
+            const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月",
+                              "七月", "八月", "九月", "十月", "十一月", "十二月"];
+            calendarMonthYear.textContent = `${year}年 ${monthNames[month]}`;
+            
+            // 获取当月第一天和最后一天
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // 获取当月第一天是星期几（0是星期日，1是星期一，...）
+            let firstDayIndex = firstDay.getDay();
+            // 调整索引，使星期一为0
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+            
+            // 获取当月总天数
+            const daysInMonth = lastDay.getDate();
+            
+            // 创建日历行
+            let date = 1;
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('tr');
+                
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement('td');
+                    
+                    if (i === 0 && j < firstDayIndex) {
+                        // 上个月的日期
+                        cell.textContent = '';
+                    } else if (date > daysInMonth) {
+                        // 下个月的日期
+                        cell.textContent = '';
+                    } else {
+                        // 当月日期
+                        cell.textContent = date;
+                        const currentDate = new Date(year, month, date);
+                        
+                        // 添加日期点击事件
+                        cell.addEventListener('click', function() {
+                            selectDate(currentDate);
+                        });
+                        
+                        // 标记今天
+                        const today = new Date();
+                        if (currentDate.toDateString() === today.toDateString()) {
+                            cell.classList.add('today');
+                        }
+                        
+                        // 标记选中的日期
+                        const selectedDate = document.getElementById('publishDate').value;
+                        if (formatDateForInput(currentDate) === selectedDate) {
+                            cell.classList.add('selected');
+                        }
+                        
+                        // 根据日期类型设置样式
+                        setDateStyle(cell, currentDate, j);
+                        
+                        date++;
+                    }
+                    
+                    row.appendChild(cell);
+                }
+                
+                calendarBody.appendChild(row);
+                
+                // 如果已经显示完所有日期，提前退出循环
+                if (date > daysInMonth) {
+                    break;
+                }
+            }
+        }
+        
+        // 设置日期样式
+        function setDateStyle(cell, date, dayOfWeek) {
+            // 先清除所有样式
+            cell.classList.remove('weekend-day', 'workday', 'holiday', 'transfer-workday');
+            
+            // 判断日期类型
+            const dateStr = formatDateForInput(date);
+            const year = date.getFullYear();
+            
+            // 检查是否有该年份的节假日数据
+            if (holidayCache[year] && holidayCache[year][dateStr]) {
+                const dateInfo = holidayCache[year][dateStr];
+                if (dateInfo.type === 'public_holiday') {
+                    cell.classList.add('holiday');
+                    cell.title = dateInfo.name_cn || '法定节假日';
+                } else if (dateInfo.type === 'transfer_workday') {
+                    cell.classList.add('transfer-workday');
+                    cell.title = dateInfo.name_cn || '调休工作日';
+                }
+            } else {
+                // 如果没有节假日数据，使用默认判断
+                if (dayOfWeek === 5 || dayOfWeek === 6) {
+                    cell.classList.add('weekend-day');
+                } else {
+                    cell.classList.add('workday');
+                }
+            }
+        }
+        
+        // 选择日期
+        function selectDate(date) {
+            // 更新输入框
+            document.getElementById('publishDate').value = formatDateForInput(date);
+            
+            // 重新渲染日历以更新选中状态
+            renderCalendar(currentMonth, currentYear);
+            
+            // 重新计算时间节点
+            calculateTimeline();
+        }
+        
+        // 上个月
+        function prevMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar(currentMonth, currentYear);
+            
+            // 如果还没有加载该年份的节假日数据，则加载
+            if (!holidayCache[currentYear]) {
+                loadHolidays(currentYear);
+            }
+        }
+        
+        // 下个月
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar(currentMonth, currentYear);
+            
+            // 如果还没有加载该年份的节假日数据，则加载
+            if (!holidayCache[currentYear]) {
+                loadHolidays(currentYear);
+            }
+        }
+        
+        // 加载节假日数据
+        async function loadHolidays(year) {
+            const apiStatus = document.getElementById('apiStatus');
+            apiStatus.textContent = '正在加载节假日数据...';
+            apiStatus.className = 'api-status loading';
+            
+            try {
+                // 使用holiday-calendar库获取节假日数据
+                if (!calendar) {
+                    throw new Error('HolidayCalendar 未初始化');
+                }
+                
+                const dates = await calendar.getDates('CN', year);
+                
+                // 缓存节假日数据
+                holidayCache[year] = {};
+                
+                dates.forEach(dateInfo => {
+                    holidayCache[year][dateInfo.date] = dateInfo;
+                });
+                
+                apiStatus.textContent = '节假日数据已加载';
+                apiStatus.className = 'api-status success';
+                
+                // 重新渲染日历
+                renderCalendar(currentMonth, currentYear);
+            } catch (error) {
+                console.error('加载节假日数据失败:', error);
+                apiStatus.textContent = '节假日数据加载失败，使用默认设置';
+                apiStatus.className = 'api-status error';
+                
+                // 使用默认的节假日数据作为备用
+                setDefaultHolidays(year);
+            }
+        }
+        
+        // 设置默认节假日数据（当API失败时使用）
+        function setDefaultHolidays(year) {
+            // 这里设置一些常见的法定节假日作为备用
+            // 注意：这只是一个简化版本，实际应用中应该使用准确的节假日数据
+            const defaultHolidays = [
+                {date: `${year}-01-01`, name_cn: '元旦', type: 'public_holiday'},
+                {date: `${year}-05-01`, name_cn: '劳动节', type: 'public_holiday'},
+                {date: `${year}-05-02`, name_cn: '劳动节', type: 'public_holiday'},
+                {date: `${year}-05-03`, name_cn: '劳动节', type: 'public_holiday'},
+                {date: `${year}-10-01`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-02`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-03`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-04`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-05`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-06`, name_cn: '国庆节', type: 'public_holiday'},
+                {date: `${year}-10-07`, name_cn: '国庆节', type: 'public_holiday'}
+            ];
+            
+            // 添加春节（根据农历计算，这里使用近似值）
+            const springFestival = getSpringFestival(year);
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(springFestival);
+                date.setDate(date.getDate() + i);
+                defaultHolidays.push({
+                    date: formatDateForInput(date),
+                    name_cn: '春节',
+                    type: 'public_holiday'
+                });
+            }
+            
+            // 缓存默认节假日数据
+            holidayCache[year] = {};
+            defaultHolidays.forEach(dateInfo => {
+                holidayCache[year][dateInfo.date] = dateInfo;
+            });
+        }
+        
+        // 获取春节日期（近似计算）
+        function getSpringFestival(year) {
+            // 春节通常在1月21日至2月20日之间
+            // 这里使用一个简化的近似计算
+            const baseDate = new Date(year, 0, 21); // 1月21日
+            const dayOfWeek = baseDate.getDay();
+            
+            // 调整到最近的星期日（春节通常从农历正月初一开始）
+            const adjustment = (7 - dayOfWeek) % 7;
+            baseDate.setDate(baseDate.getDate() + adjustment);
+            
+            return baseDate;
+        }
+        
+        // 判断是否为工作日
+        async function isWorkday(date) {
+            const dateStr = formatDateForInput(date);
+            
+            // 如果有节假日数据，使用节假日数据判断
+            const year = date.getFullYear();
+            if (holidayCache[year] && holidayCache[year][dateStr]) {
+                const dateInfo = holidayCache[year][dateStr];
+                // 调休工作日是工作日，法定节假日不是工作日
+                return dateInfo.type === 'transfer_workday';
+            }
+            
+            // 如果没有节假日数据，尝试使用API
+            if (calendar) {
+                try {
+                    return await calendar.isWorkday('CN', dateStr);
+                } catch (error) {
+                    console.error('使用API判断工作日失败:', error);
+                }
+            }
+            
+            // 如果API失败，使用默认判断（周末不是工作日）
+            const dayOfWeek = date.getDay();
+            return dayOfWeek !== 0 && dayOfWeek !== 6;
+        }
+        
+        // 判断是否为节假日
+        async function isHoliday(date) {
+            const dateStr = formatDateForInput(date);
+            
+            // 如果有节假日数据，使用节假日数据判断
+            const year = date.getFullYear();
+            if (holidayCache[year] && holidayCache[year][dateStr]) {
+                const dateInfo = holidayCache[year][dateStr];
+                // 法定节假日是假期
+                return dateInfo.type === 'public_holiday';
+            }
+            
+            // 如果没有节假日数据，尝试使用API
+            if (calendar) {
+                try {
+                    return await calendar.isHoliday('CN', dateStr);
+                } catch (error) {
+                    console.error('使用API判断节假日失败:', error);
+                // 如果API失败，使用默认判断（周末是假期）
+                    const dayOfWeek = date.getDay();
+                    return dayOfWeek === 0 || dayOfWeek === 6;
+                }
+            }
+            
+            // 如果API失败，使用默认判断（周末是假期）
+            const dayOfWeek = date.getDay();
+            return dayOfWeek === 0 || dayOfWeek === 6;
+        }
+        
+        // 计算时间节点
+        async function calculateTimeline() {
+            const publishDateStr = document.getElementById('publishDate').value;
+            if (!publishDateStr) {
+                alert('请选择招标发布时间');
+                return;
+            }
+            
+            const publishDate = new Date(publishDateStr);
+            if (isNaN(publishDate.getTime())) {
+                alert('请选择有效的日期');
+                return;
+            }
+            
+            // 计算各个节点
+            const displayStartDate = await addWorkdays(publishDate, 1); // 第二天开始公示
+            const displayEndDate = await addWorkdays(displayStartDate, 5); // 公示5个工作日
+            const qaStartDate = await addWorkdays(displayEndDate, 1); // 公示结束后开始答疑
+            const bidOpenDate = await addWorkdays(qaStartDate, 16); // 往后16个工作日开标
+            const resultDisplayStartDate = bidOpenDate; // 同一天开始结果公示
+            const resultDisplayEndDate = await addWorkdays(resultDisplayStartDate, 3); // 结果公示3个工作日
+            const announcementDate = resultDisplayEndDate; // 第3个工作日发出中标公告
+            
+            // 显示结果
+            displayResults([
+                { date: formatDate(publishDate), title: '招标发布时间', description: '项目招标正式发布' },
+                { date: formatDate(displayStartDate), title: '公示开始时间', description: '第二天开始公示' },
+                { date: formatDate(displayEndDate), title: '公示结束时间', description: '公示5个工作日结束' },
+                { date: formatDate(qaStartDate), title: '答疑开始时间', description: '开始截至提问并开始答疑' },
+                { date: formatDate(bidOpenDate), title: '开标时间', description: '开标、评标和确认结果' },
+                { date: formatDate(resultDisplayStartDate), title: '结果公示开始时间', description: '开始结果公示' },
+                { date: formatDate(resultDisplayEndDate), title: '中标公告发布时间', description: '结果公示3个工作日后发布中标公告' }
+            ]);
+            
+            // 显示时间线
+            displayTimeline([
+                { date: publishDate, title: '招标发布', description: '项目招标正式发布' },
+                { date: displayStartDate, title: '公示开始', description: '第二天开始公示' },
+                { date: displayEndDate, title: '公示结束', description: '公示5个工作日结束' },
+                { date: qaStartDate, title: '答疑开始', description: '开始截至提问并开始答疑' },
+                { date: bidOpenDate, title: '开标评标', description: '开标、评标和确认结果' },
+                { date: resultDisplayStartDate, title: '结果公示开始', description: '开始结果公示' },
+                { date: resultDisplayEndDate, title: '中标公告', description: '发布中标公告' }
+            ]);
+            
+            document.getElementById('resultSection').style.display = 'block';
+        }
+        
+        // 添加工作日
+        async function addWorkdays(startDate, workdays) {
+            let result = new Date(startDate);
+            let addedDays = 0;
+            
+            while (addedDays < workdays) {
+                result.setDate(result.getDate() + 1);
+                // 检查是否为工作日
+                if (await isWorkday(result)) {
+                    addedDays++;
+                }
+            }
+            
+            return result;
+        }
+        
+        // 格式化日期显示
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekday = weekdays[date.getDay()];
+            
+            return `${year}-${month}-${day} (${weekday})`;
+        }
+        
+        // 格式化日期为输入框格式
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 显示计算结果
+        function displayResults(items) {
+            const resultItemsContainer = document.getElementById('resultItems');
+            resultItemsContainer.innerHTML = '';
+            
+            items.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'result-item';
+                
+                itemElement.innerHTML = `
+                    <div class="date">${item.date}</div>
+                    <div class="description">${item.title}：${item.description}</div>
+                `;
+                
+                resultItemsContainer.appendChild(itemElement);
+            });
+        }
+        
+        // 显示时间线
+        function displayTimeline(items) {
+            const timelineContainer = document.getElementById('timelineItems');
+            timelineContainer.innerHTML = '';
+            
+            items.forEach(item => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                
+                timelineItem.innerHTML = `
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-date">${formatDate(item.date)}</div>
+                    <div class="timeline-desc">${item.title}：${item.description}</div>
+                `;
+                
+                timelineContainer.appendChild(timelineItem);
+            });
+        }
+    </script>
+</body>
+</html>
